@@ -3,7 +3,7 @@ title: Get Started
 description: Get your LaunchKit project up and running in minutes.
 ---
 
-import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { Tabs, TabItem, FileTree } from '@astrojs/starlight/components';
 
 Procodinnaaaa! Hey maker, welcome to LaunchKit 👋
 
@@ -78,30 +78,32 @@ LaunchKit uses the latest Next.js 15 with App Router for optimal performance and
 
 ### Key directories breakdown:
 
-```
-├── app/
-│   ├── api/                 # API routes
-│   │   ├── auth/           # Authentication endpoints
-│   │   ├── lead/           # Lead capture
-│   │   ├── stripe/         # Payment processing
-│   │   └── webhook/        # Webhook handlers
-│   ├── blog/               # MDX blog system
-│   ├── dashboard/          # Protected user area
-│   ├── signin/             # Authentication pages
-│   └── page.tsx            # Homepage
-├── components/             # React components
-│   ├── ui/                 # Shadcn/UI components
-│   ├── ButtonSignin.tsx    # Auth components
-│   ├── Pricing.tsx         # Pricing table
-│   ├── Hero.tsx            # Landing page hero
-│   └── ...                 # 25+ other components
-├── libs/                   # Utility libraries
-│   ├── supabase/          # Database clients
-│   ├── stripe.ts          # Payment processing
-│   ├── resend.ts          # Email service
-│   └── seo.tsx            # SEO utilities
-└── config.ts              # App configuration
-```
+<FileTree>
+
+- app
+  - api/ API routes
+    - auth/ Authentication endpoints
+    - lead/ Lead capture
+    - stripe/ Payment processing
+    - webhook/ Webhook handlers
+  - blog/ MDX blog system
+  - dashboard/ Protected user area
+  - signin/ Authentication pages
+  - page.tsx Homepage
+- components/ React components
+  - ui/ Shadcn/UI components
+    - ButtonSignin.tsx Auth components
+    - Pricing.tsx Pricing table
+    - Hero.tsx Landing page hero
+    - ... 25+ other components
+- libs/ Utility libraries
+  - supabase/ Database clients
+  - stripe.ts Payment processing
+  - resend.ts Email service
+  - seo.tsx SEO utilities
+- config.ts App configuration
+
+</FileTree>
 
 ## config.ts file
 

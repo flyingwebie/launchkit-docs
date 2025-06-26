@@ -11,7 +11,7 @@ export default defineConfig({
         {
           icon: 'github',
           label: 'GitHub',
-          href: 'https://github.com/your-org/launchkit',
+          href: 'https://github.com/flyingwebie/LaunchKit',
         },
       ],
       sidebar: [
