@@ -1,0 +1,446 @@
+---
+title: Database
+description: Set up and manage your PostgreSQL database with Supabase.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+LaunchKit uses **Supabase** as the database solution, providing you with a full PostgreSQL database with real-time capabilities, built-in authentication, and automatic API generation.
+
+## Setup
+
+1. **Create a Supabase Project**: Go to [supabase.com](https://supabase.com) and create a new project.
+
+2. **Get Your Credentials**: In your Supabase dashboard, go to Settings > API to find your:
+
+   - Project URL
+   - Anon/Public Key
+   - Service Role Key
+
+3. **Add Environment Variables**: Add your Supabase credentials to `.env.local`:
+
+```shell
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
+
+## Database Schema
+
+LaunchKit comes with pre-defined database tables optimized for SaaS applications with authentication, payments, and lead generation.
+
+### Core Tables
+
+- **profiles** - User profiles (extends Supabase auth.users) with Stripe integration
+- **leads** - Email leads for waitlist and marketing
+- **customers** - Stripe customer data (optional, can be merged with profiles)
+
+### 1. Creating the Profiles Table
+
+In your Supabase SQL Editor, run this query to add a `profiles` table (an extension of the authenticated user to store data like Stripe customer_id, subscription access, etc...):
+
+```sql
+-- Create the profiles table in the public schema
+CREATE TABLE public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT,
+    email TEXT,
+    image TEXT,
+    customer_id TEXT,
+    price_id TEXT,
+    has_access BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC')
+);
+
+-- Create a function to update the updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = (now() AT TIME ZONE 'UTC');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create a trigger to automatically update the updated_at column
+CREATE TRIGGER profiles_updated_at
+    BEFORE UPDATE ON public.profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at();
+
+-- Create a function to handle user signup
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, name, email, image)
+    VALUES (
+        NEW.id,
+        COALESCE(NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'full_name'),
+        NEW.email,
+        NEW.raw_user_meta_data->>'avatar_url'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create a trigger to automatically create a profile on signup
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW
+    EXECUTE FUNCTION handle_new_user();
+```
+
+### 2. Creating the Leads Table
+
+For collecting email leads and waitlist signups:
+
+```sql
+-- Create the leads table
+CREATE TABLE public.leads (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC'),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT (now() AT TIME ZONE 'UTC')
+);
+
+-- Create trigger for updated_at
+CREATE TRIGGER leads_updated_at
+    BEFORE UPDATE ON public.leads
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at();
+```
+
+### 3. Row Level Security (RLS)
+
+Enable RLS for secure access to your data:
+
+```sql
+-- Enable RLS on profiles table
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can view their own profile
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (auth.uid() = id);
+
+-- Policy: Users can update their own profile
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
+
+-- Policy: Users can insert their own profile (handled by trigger)
+CREATE POLICY "Users can insert own profile" ON public.profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Enable RLS on leads table
+ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Anyone can insert leads (for public signup forms)
+CREATE POLICY "Anyone can insert leads" ON public.leads
+    FOR INSERT WITH CHECK (true);
+
+-- Policy: Only authenticated users can view leads (optional)
+CREATE POLICY "Authenticated users can view leads" ON public.leads
+    FOR SELECT USING (auth.role() = 'authenticated');
+```
+
+## Supabase Client Configuration
+
+LaunchKit includes pre-configured Supabase clients for both client-side and server-side operations.
+
+### Client-Side Usage
+
+```typescript
+// libs/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr';
+
+export const createClient = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+```
+
+### Server-Side Usage
+
+```typescript
+// libs/supabase/server.ts
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+
+export const createClient = () => {
+  const cookieStore = cookies();
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  );
+};
+```
+
+## Common Database Operations
+
+### 1. User Profile Management
+
+```typescript
+// Get user profile
+export async function getProfile(userId: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching profile:', error);
+    return null;
+  }
+
+  return data;
+}
+
+// Update user profile
+export async function updateProfile(
+  userId: string,
+  updates: {
+    name?: string;
+    email?: string;
+    image?: string;
+  }
+) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating profile:', error);
+    throw error;
+  }
+
+  return data;
+}
+```
+
+### 2. Lead Management
+
+```typescript
+// Add new lead
+export async function addLead(email: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert({ email })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding lead:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Get all leads (admin only)
+export async function getLeads() {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching leads:', error);
+    throw error;
+  }
+
+  return data;
+}
+```
+
+### 3. Stripe Integration
+
+```typescript
+// Update user subscription status
+export async function updateUserAccess(
+  userId: string,
+  hasAccess: boolean,
+  priceId?: string
+) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      has_access: hasAccess,
+      price_id: priceId,
+    })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating user access:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Add Stripe customer ID to user profile
+export async function updateStripeCustomer(userId: string, customerId: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ customer_id: customerId })
+    .eq('id', userId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating Stripe customer:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+// Remove user access (on subscription cancellation)
+export async function removeUserAccess(stripeCustomerId: string) {
+  const supabase = createClient();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({
+      has_access: false,
+      price_id: null,
+    })
+    .eq('customer_id', stripeCustomerId);
+
+  if (error) {
+    console.error('Error removing user access:', error);
+    throw error;
+  }
+
+  return data;
+}
+```
+
+## Database Types
+
+LaunchKit includes TypeScript types for your database. Generate them with:
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.types.ts
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.types.ts
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn dlx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.types.ts
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bunx supabase gen types typescript --project-id YOUR_PROJECT_ID > types/database.types.ts
+    ```
+  </TabItem>
+</Tabs>
+
+Then use them in your code:
+
+```typescript
+import { Database } from '@/types/database.types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type Lead = Database['public']['Tables']['leads']['Row'];
+
+// Example usage
+const updateProfile = async (userId: string, updates: Partial<Profile>) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', userId);
+};
+```
+
+## Migrations
+
+For database changes, use Supabase migrations:
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    # Create a new migration
+    npx supabase migration new add_new_column
+
+    # Apply migrations
+    npx supabase db push
+    ```
+
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    # Create a new migration
+    pnpx supabase migration new add_new_column
+
+    # Apply migrations
+    pnpx supabase db push
+    ```
+
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    # Create a new migration
+    yarn dlx supabase migration new add_new_column
+
+    # Apply migrations
+    yarn dlx supabase db push
+    ```
+
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    # Create a new migration
+    bunx supabase migration new add_new_column
+
+    # Apply migrations
+    bunx supabase db push
+    ```
+
+  </TabItem>
+</Tabs>
+
+Your Supabase database is now ready to power your LaunchKit application with authentication, real-time updates, and type safety!

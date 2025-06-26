@@ -1,0 +1,328 @@
+---
+title: Deployment
+description: Deploy your LaunchKit app to production.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Ready to deploy your LaunchKit app? Let's get it live in minutes!
+
+## Deploy to Vercel (Recommended)
+
+Vercel is the easiest way to deploy your Next.js LaunchKit app.
+
+### Prerequisites
+
+1. Push your code to GitHub, GitLab, or Bitbucket
+2. Have a [Vercel account](https://vercel.com)
+
+### Steps
+
+1. **Connect Your Repository**:
+
+   - Go to [Vercel Dashboard](https://vercel.com/dashboard)
+   - Click "New Project"
+   - Import your LaunchKit repository
+
+2. **Configure Environment Variables**:
+   Add these environment variables in Vercel:
+
+   ```shell
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   RESEND_API_KEY=your_resend_api_key
+   STRIPE_PUBLIC_KEY=your_stripe_public_key
+   STRIPE_SECRET_KEY=your_stripe_secret_key
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   ```
+
+3. **Deploy**: Click "Deploy" and wait for the build to complete.
+
+4. **Update Supabase Settings**:
+   - Go to your Supabase dashboard
+   - Navigate to Authentication > Settings
+   - Add your Vercel domain to "Site URL" and "Redirect URLs"
+
+### Custom Domain
+
+1. In Vercel, go to your project settings
+2. Click "Domains"
+3. Add your custom domain
+4. Update your DNS records as instructed
+5. Update Supabase redirect URLs with your custom domain
+
+## Deploy to Netlify
+
+1. **Build Settings**:
+
+<Tabs>
+  <TabItem label="npm">
+    - Build command: `npm run build`
+    - Publish directory: `.next`
+  </TabItem>
+  <TabItem label="pnpm">
+    - Build command: `pnpm run build`
+    - Publish directory: `.next`
+  </TabItem>
+  <TabItem label="yarn">
+    - Build command: `yarn build`
+    - Publish directory: `.next`
+  </TabItem>
+  <TabItem label="bun">
+    - Build command: `bun run build`
+    - Publish directory: `.next`
+  </TabItem>
+</Tabs>
+
+2. **Environment Variables**: Add the same environment variables as listed above
+
+3. **Redirects**: Create a `_redirects` file in your `public` folder:
+   ```
+   /*    /index.html   200
+   ```
+
+## Deploy to Railway
+
+1. Connect your GitHub repository to Railway
+2. Add environment variables
+3. Railway will automatically detect and deploy your Next.js app
+
+## Environment Variables Checklist
+
+Make sure you have all required environment variables set:
+
+- ✅ `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- ✅ `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anonymous key
+- ✅ `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key
+- ✅ `RESEND_API_KEY` - Resend API key for emails
+- ✅ `STRIPE_PUBLIC_KEY` - Stripe publishable key
+- ✅ `STRIPE_SECRET_KEY` - Stripe secret key
+- ✅ `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
+
+## Database Setup
+
+1. **Run Database Migrations**: If you have any custom migrations, run them in your Supabase dashboard
+
+2. **Set up Row Level Security (RLS)**: Ensure your RLS policies are properly configured
+
+3. **Test Database Connection**: Verify your app can connect to the database
+
+## Stripe Configuration
+
+1. **Update Webhook URL**: In your Stripe dashboard, update your webhook endpoint to point to your production domain:
+
+   ```
+   https://yourdomain.com/api/webhook/stripe
+   ```
+
+2. **Test Payments**: Make a test payment to ensure everything works
+
+3. **Enable Live Mode**: Switch from test mode to live mode when ready
+
+## Analytics Integration
+
+Add analytics to track your app performance:
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install @vercel/analytics
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @vercel/analytics
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @vercel/analytics
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun add @vercel/analytics
+    ```
+  </TabItem>
+</Tabs>
+
+```tsx
+// app/layout.tsx
+import { Analytics } from '@vercel/analytics/react';
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+      </body>
+    </html>
+  );
+}
+```
+
+## Performance Optimization
+
+### 1. Image Optimization
+
+LaunchKit uses Next.js Image component for automatic optimization:
+
+```tsx
+import Image from 'next/image';
+
+<Image
+  src="/hero-image.jpg"
+  alt="Hero"
+  width={800}
+  height={600}
+  priority // For above-the-fold images
+/>;
+```
+
+### 2. Bundle Analysis
+
+Analyze your bundle size:
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install @next/bundle-analyzer
+    npm run build
+    npm run analyze
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @next/bundle-analyzer
+    pnpm run build
+    pnpm run analyze
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @next/bundle-analyzer
+    yarn build
+    yarn analyze
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun add @next/bundle-analyzer
+    bun run build
+    bun run analyze
+    ```
+  </TabItem>
+</Tabs>
+
+### 3. Caching Strategy
+
+Configure caching in `next.config.js`:
+
+```javascript
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  experimental: {
+    appDir: true,
+  },
+  images: {
+    domains: ['yourdomain.com'],
+  },
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ];
+  },
+};
+
+module.exports = nextConfig;
+```
+
+## Security Checklist
+
+- ✅ Environment variables are secure and not exposed
+- ✅ HTTPS is enabled (automatic with Vercel)
+- ✅ Content Security Policy configured
+- ✅ Rate limiting implemented for API routes
+- ✅ Input validation on all forms
+- ✅ Supabase RLS policies are properly configured
+- ✅ Stripe webhooks are secured with signatures
+
+## Monitoring & Logging
+
+### 1. Error Tracking
+
+Set up error tracking with Sentry:
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install @sentry/nextjs
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @sentry/nextjs
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @sentry/nextjs
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```bash
+    bun add @sentry/nextjs
+    ```
+  </TabItem>
+</Tabs>
+
+### 2. Uptime Monitoring
+
+Set up uptime monitoring with services like:
+
+- Vercel Analytics (built-in)
+- UptimeRobot
+- Pingdom
+- StatusPage
+
+## Custom Domain Setup
+
+### 1. DNS Configuration
+
+For a custom domain like `yourlaunchkit.com`:
+
+1. **Purchase your domain** from a registrar (Namecheap, GoDaddy, etc.)
+
+2. Configure DNS records:
+   - For apex domain: A record pointing to `76.76.19.61`
+   - For www subdomain: CNAME record pointing to `cname.vercel-dns.com`
+
+### SSL Certificate
+
+Vercel automatically provides SSL certificates for all domains. No additional setup required!
+
+## Backup Strategy
+
+1. **Database Backups**: Supabase automatically backs up your database
+2. **Code Backups**: Keep your code in version control (Git)
+3. **Environment Variables**: Keep a secure backup of your `.env` file
+
+Your LaunchKit app is now live and ready to serve users! 🚀

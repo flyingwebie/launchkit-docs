@@ -1,0 +1,291 @@
+---
+title: Get Started
+description: Get your LaunchKit project up and running in minutes.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Procodinnaaaa! Hey maker, welcome to LaunchKit 👋
+
+Here's a quick overview of the boilerplate. Follow along to get your app up and running.
+
+Once you're done, start with the [Ship in 5 minutes tutorial](/guides/ship-in-5-minutes) to launch your project in 5 minutes. Let's build that startup, FAST ⚡️
+
+## Start a local server
+
+1. In your terminal, run the following commands one-by-one:
+
+```shell
+git clone https://github.com/flyingwebie/LaunchKit.git [YOUR_APP_NAME]
+cd [YOUR_APP_NAME]
+```
+
+<Tabs>
+  <TabItem label="npm">
+    ```shell
+    npm install
+    npm run dev
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```shell
+    pnpm install
+    pnpm run dev
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```shell
+    yarn install
+    yarn run dev
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```shell
+    bun install
+    bun run dev
+    ```
+  </TabItem>
+</Tabs>
+
+```shell
+git remote remove origin
+```
+
+LaunchKit requires Node 18.17 or greater. Type `node -v` in your terminal to check version.
+
+2. Rename `.env.example` to `.env.local`
+
+```shell
+mv .env.example .env.local
+```
+
+3. Go to the [Supabase dashboard](https://supabase.com/dashboard), create a new project and paste your 3 Supabase environment variables `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` in `.env.local`
+
+4. Open `http://localhost:3000` to see your site. And voila!
+
+You will see errors in the console but nothing important.
+
+## Next.js 15 project structure
+
+LaunchKit uses the latest Next.js 15 with App Router for optimal performance and developer experience:
+
+- `/app` → Pages (1 folder + page.tsx = 1 page)
+- `/app/api` → API routes (1 file = 1 API endpoint)
+- `/components` → React components (25+ pre-built components)
+- `/libs` → Libraries helper functions (Stripe, Resend, Supabase, SEO, etc.)
+- `/types` → TypeScript type definitions
+- `/public` → Static assets
+
+### Key directories breakdown:
+
+```
+├── app/
+│   ├── api/                 # API routes
+│   │   ├── auth/           # Authentication endpoints
+│   │   ├── lead/           # Lead capture
+│   │   ├── stripe/         # Payment processing
+│   │   └── webhook/        # Webhook handlers
+│   ├── blog/               # MDX blog system
+│   ├── dashboard/          # Protected user area
+│   ├── signin/             # Authentication pages
+│   └── page.tsx            # Homepage
+├── components/             # React components
+│   ├── ui/                 # Shadcn/UI components
+│   ├── ButtonSignin.tsx    # Auth components
+│   ├── Pricing.tsx         # Pricing table
+│   ├── Hero.tsx            # Landing page hero
+│   └── ...                 # 25+ other components
+├── libs/                   # Utility libraries
+│   ├── supabase/          # Database clients
+│   ├── stripe.ts          # Payment processing
+│   ├── resend.ts          # Email service
+│   └── seo.tsx            # SEO utilities
+└── config.ts              # App configuration
+```
+
+## config.ts file
+
+This is the backbone of your LaunchKit app. It centralizes all configuration including:
+
+- **App settings**: Name, description, domain
+- **Stripe plans**: Multiple pricing tiers with features
+- **Email settings**: From addresses and support email
+- **Authentication**: Login/callback URLs
+- **Theme settings**: Dark mode configuration
+- **Integrations**: Crisp chat, AWS S3, etc.
+
+Each key is documented to know how and why it's used. Have a thorough look at it as it controls most of your app's behavior.
+
+## .env.local file
+
+Rename the `.env.example` file to `.env.local`. The file content should look like this:
+
+```shell
+# -----------------------------------------------------------------------------
+# Resend (for email functionality)
+# -----------------------------------------------------------------------------
+RESEND_API_KEY=
+
+# -----------------------------------------------------------------------------
+# Supabase (database and authentication)
+# -----------------------------------------------------------------------------
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# -----------------------------------------------------------------------------
+# Stripe (payments)
+# -----------------------------------------------------------------------------
+STRIPE_PUBLIC_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+```
+
+## Tech Stack Overview
+
+LaunchKit comes with a modern, production-ready tech stack:
+
+### Frontend
+
+- **React 19** - Latest React with concurrent features
+- **Next.js 15** - App Router with Server Components
+- **TypeScript** - Type safety throughout
+- **Tailwind CSS** - Utility-first styling
+- **Shadcn/UI** - Beautiful, accessible components
+- **Framer Motion** - Smooth animations
+- **next-themes** - Dark/light mode with system detection
+
+### Backend
+
+- **Next.js API Routes** - Serverless API endpoints
+- **Supabase** - PostgreSQL database with Row Level Security
+- **Supabase Auth** - Authentication with OAuth providers
+- **Stripe** - Payment processing and subscriptions
+- **Resend** - Transactional email delivery
+
+### Additional Features
+
+- **MDX Blog** - Built-in content management
+- **SEO Optimization** - Meta tags, sitemaps, structured data
+- **Crisp Chat** - Customer support integration
+- **Error Handling** - Global error boundaries
+- **Type Safety** - Full TypeScript coverage
+
+## Quick Setup Checklist
+
+1. ✅ Clone the repository
+2. ✅ Install dependencies
+3. ✅ Copy `.env.example` to `.env.local`
+4. ✅ Set up Supabase project and add environment variables
+5. ✅ Run development server
+6. 🔄 Set up Stripe for payments (optional)
+7. 🔄 Configure Resend for emails (optional)
+8. 🔄 Add Crisp chat widget (optional)
+
+## Available Scripts
+
+<Tabs>
+  <TabItem label="npm">
+    ```shell
+    npm run dev          # Start development server
+    npm run build        # Build for production
+    npm run start        # Start production server
+    npm run lint         # Run ESLint
+    npm run postbuild    # Generate sitemap (runs after build)
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```shell
+    pnpm run dev         # Start development server
+    pnpm run build       # Build for production
+    pnpm run start       # Start production server
+    pnpm run lint        # Run ESLint
+    pnpm run postbuild   # Generate sitemap (runs after build)
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```shell
+    yarn dev             # Start development server
+    yarn build           # Build for production
+    yarn start           # Start production server
+    yarn lint            # Run ESLint
+    yarn postbuild       # Generate sitemap (runs after build)
+    ```
+  </TabItem>
+  <TabItem label="bun">
+    ```shell
+    bun run dev          # Start development server
+    bun run build        # Build for production
+    bun run start        # Start production server
+    bun run lint         # Run ESLint
+    bun run postbuild    # Generate sitemap (runs after build)
+    ```
+  </TabItem>
+</Tabs>
+
+## What's Included Out of the Box
+
+### 🔐 Authentication
+
+- Magic link authentication
+- OAuth providers (Google, GitHub, etc.)
+- Protected routes with middleware
+- User session management
+
+### 💳 Payments
+
+- Stripe checkout integration
+- Multiple pricing plans
+- Subscription management
+- Customer portal
+- Webhook handling
+
+### 🎨 UI Components
+
+- 25+ pre-built components
+- Dark/light mode support
+- Responsive design
+- Accessible components
+- Loading states and animations
+
+### 📧 Email System
+
+- Transactional emails with Resend
+- Welcome emails
+- Password reset
+- Custom email templates
+
+### 🎯 Marketing
+
+- SEO-optimized pages
+- Blog system with MDX
+- Lead capture forms
+- Analytics ready
+
+### 🛡️ Security & Performance
+
+- Row Level Security (RLS)
+- Input validation with Zod
+- Error boundaries
+- Optimized images and fonts
+- TypeScript for type safety
+
+## Next Steps
+
+Now that you have LaunchKit running locally, here's what to do next:
+
+1. **Customize your config.ts** - Update app name, description, and settings
+2. **Set up your database** - Follow the [Database Guide](/guides/database)
+3. **Configure payments** - Set up Stripe in the [Payments Guide](/guides/payments)
+4. **Add authentication** - Configure OAuth in the [Authentication Guide](/guides/authentication)
+5. **Deploy your app** - Follow the [Deployment Guide](/guides/deployment)
+
+Or jump straight to the [Ship in 5 minutes tutorial](/guides/ship-in-5-minutes) to get your startup live within 5 minutes!
+
+## Getting Help
+
+- 📚 [Full Documentation](https://www.flyingweb.design/docs)
+- 💬 [Support](mailto:davide@flyingweb.ie)
+- 🐛 [Report Issues](https://github.com/flyingwebie/LaunchKit/issues)
+
+Let's ship it, FAST 🦉
