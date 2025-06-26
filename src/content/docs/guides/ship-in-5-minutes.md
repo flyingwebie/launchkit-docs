@@ -3,7 +3,7 @@ title: Ship in 5 Minutes
 description: Get your startup in front of customers in 5 minutes.
 ---
 
-Let's get your startup in front of your customers in 5 minutes ⚡️
+Let's get your startup in front of your customers in 5 minutes 🚀
 
 We're building a beautiful landing page and adding forms to collect emails for a waitlist (optional)
 
@@ -14,15 +14,15 @@ We're building a beautiful landing page and adding forms to collect emails for a
 2. Delete everything in `/app/page.js`, and paste this:
 
 ```jsx
-import { Suspense } from 'react';
-import Header from '@/components/Header';
-import Hero from '@/components/Hero';
-import Problem from '@/components/Problem';
-import FeaturesAccordion from '@/components/FeaturesAccordion';
-import Pricing from '@/components/Pricing';
-import FAQ from '@/components/FAQ';
-import CTA from '@/components/CTA';
-import Footer from '@/components/Footer';
+import { Suspense } from "react";
+import Header from "@/components/Header";
+import Hero from "@/components/Hero";
+import Problem from "@/components/Problem";
+import FeaturesAccordion from "@/components/FeaturesAccordion";
+import Pricing from "@/components/Pricing";
+import FAQ from "@/components/FAQ";
+import CTA from "@/components/CTA";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
