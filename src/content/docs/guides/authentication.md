@@ -16,12 +16,40 @@ There are 2 built-in ways to authenticate users with LaunchKit:
 
 1. **Configure Supabase Auth**: In your Supabase dashboard, go to Authentication > Settings and configure your site URL and redirect URLs.
 
-2. **Add Environment Variables**: Make sure you have your Supabase credentials in `.env.local`:
+2. **Configure Redirect URLs**:
+   - Go to your Supabase Dashboard
+   - Navigate to Authentication > URL Configuration
+   - Set your **Site URL** to your production URL (e.g., `https://yourdomain.com`)
+   - Add **Redirect URLs** to the allow list:
+     - For local development: `http://localhost:3000/**`
+     - For production: `https://yourdomain.com/**`
+     - For Netlify previews: `https://**--your_org.netlify.app/**`
+     - For Vercel previews: `https://*-your-team-slug.vercel.app/**`
+
+   **Note**: You can use wildcards (`*`, `**`, `?`) in redirect URLs to support preview deployments. The `**` wildcard matches any sequence of characters, while `*` matches any sequence of non-separator characters.
+
+3. **Add Environment Variables**: Create a `.env.local` file with the following variables:
 
 ```shell
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# -----------------------------------------------------------------------------
+# Resend
+# -----------------------------------------------------------------------------
+RESEND_API_KEY=
+
+# -----------------------------------------------------------------------------
+# Database URI
+# -----------------------------------------------------------------------------
+NEXT_PUBLIC_APP_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# -----------------------------------------------------------------------------
+# Stripe
+# -----------------------------------------------------------------------------
+STRIPE_PUBLIC_KEY=
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
 ```
 
 ## Magic Links Setup
@@ -45,10 +73,10 @@ Magic links allow users to sign in via a link sent to their email.
 Here's how to implement a sign-in button:
 
 ```jsx
-'use client';
+"use client";
 
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
 
 const SignInButton = () => {
   const supabase = createClientComponentClient();
@@ -56,7 +84,7 @@ const SignInButton = () => {
 
   const handleSignIn = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         redirectTo: `${location.origin}/auth/callback`,
       },
@@ -80,7 +108,7 @@ const SignInButton = () => {
 
       <button
         className="btn btn-secondary"
-        onClick={() => handleMagicLink('user@example.com')}
+        onClick={() => handleMagicLink("user@example.com")}
       >
         Send Magic Link
       </button>
@@ -96,13 +124,13 @@ export default SignInButton;
 Create an auth callback route at `/app/auth/callback/route.js`:
 
 ```javascript
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function GET(request) {
   const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
+  const code = requestUrl.searchParams.get("code");
 
   if (code) {
     const cookieStore = cookies();
@@ -120,9 +148,9 @@ export async function GET(request) {
 To protect routes, use middleware or check auth status in your components:
 
 ```jsx
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function ProtectedPage() {
   const cookieStore = cookies();
@@ -133,7 +161,7 @@ export default async function ProtectedPage() {
   } = await supabase.auth.getSession();
 
   if (!session) {
-    redirect('/login');
+    redirect("/login");
   }
 
   return (
@@ -152,7 +180,7 @@ To sign out users:
 ```jsx
 const handleSignOut = async () => {
   await supabase.auth.signOut();
-  router.push('/');
+  router.push("/");
 };
 ```
 

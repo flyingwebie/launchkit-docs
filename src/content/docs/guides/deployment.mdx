@@ -28,13 +28,25 @@ Vercel is the easiest way to deploy your Next.js LaunchKit app.
    Add these environment variables in Vercel:
 
    ```shell
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-   RESEND_API_KEY=your_resend_api_key
-   STRIPE_PUBLIC_KEY=your_stripe_public_key
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+    # -----------------------------------------------------------------------------
+    # Resend
+    # -----------------------------------------------------------------------------
+    RESEND_API_KEY=
+
+    # -----------------------------------------------------------------------------
+    # Database URI
+    # -----------------------------------------------------------------------------
+    NEXT_PUBLIC_APP_URL=
+    NEXT_PUBLIC_SUPABASE_URL=
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=
+    SUPABASE_SERVICE_ROLE_KEY=
+
+    # -----------------------------------------------------------------------------
+    # Stripe
+    # -----------------------------------------------------------------------------
+    STRIPE_PUBLIC_KEY=
+    STRIPE_SECRET_KEY=
+    STRIPE_WEBHOOK_SECRET=
    ```
 
 3. **Deploy**: Click "Deploy" and wait for the build to complete.
